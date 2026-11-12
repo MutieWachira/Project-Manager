@@ -1,0 +1,13 @@
+fastapi
+uvicorn[standard]
+sqlalchemy
+alembic
+pydantic
+pydantic-settings
+psycopg[binary]
+python-jose[cryptography]
+pwdlib[argon2]
+email-validator
+pyotp
+qrcode[pil]
+slowapi
