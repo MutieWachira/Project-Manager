@@ -2,6 +2,13 @@
 
 All notable changes to SherlskyyCommand will be documented here.
 
+## [0.2.0](https://github.com/MutieWachira/Project-Manager/compare/v0.1.0...v0.2.0) (2026-11-13)
+
+
+### Features
+
+* add secure auth, project management, and release updates. ([476f217](https://github.com/MutieWachira/Project-Manager/commit/476f217552b63a1add0c71e130b000f04a378e04))
+
 ## [Unreleased]
 
 ### Added
