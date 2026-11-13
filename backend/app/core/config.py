@@ -2,16 +2,18 @@ from functools import lru_cache
 from pathlib import Path
 from typing import Literal
 
+from cryptography.fernet import Fernet
 from pydantic import Field, SecretStr, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
-
 
 PROJECT_ROOT = Path(__file__).resolve().parents[3]
 
 
 class Settings(BaseSettings):
     APP_NAME: str = "SherlskyyCommand"
-    APP_VERSION: str = "0.1.0"
+    APP_VERSION: str = (PROJECT_ROOT / "version.txt").read_text(
+        encoding="utf-8"
+    ).strip()
     APP_ENV: str = "development"
 
     API_V1_PREFIX: str = "/api/v1"
@@ -28,6 +30,7 @@ class Settings(BaseSettings):
     # JWT authentication
     JWT_SECRET_KEY: SecretStr
     JWT_ALGORITHM: Literal["HS256"] = "HS256"
+    MFA_ENCRYPTION_KEY: SecretStr
 
     ACCESS_TOKEN_EXPIRE_MINUTES: int = Field(
         default=10,
@@ -35,16 +38,46 @@ class Settings(BaseSettings):
         le=30,
     )
 
+    # Authentication session configuration
+    SESSION_EXPIRE_DAYS: int = Field(
+        default=30,
+        ge=1,
+        le=90,
+    )
+
+    REFRESH_TOKEN_EXPIRE_DAYS: int = Field(
+        default=30,
+        ge=1,
+        le=90,
+    )
+
+    REFRESH_TOKEN_COOKIE_NAME: str = "sherlskyycommand_refresh"
+    REFRESH_TOKEN_COOKIE_PATH: str = "/api/v1/auth"
+    REFRESH_TOKEN_COOKIE_SAMESITE: Literal["lax", "strict", "none"] = "lax"
+
+    @property
+    def refresh_token_cookie_secure(self) -> bool:
+        """Require HTTPS for refresh cookies in production."""
+        return self.APP_ENV.casefold() == "production"
+
     JWT_ISSUER: str = "SherlskyyCommand"
     JWT_AUDIENCE: str = "SherlskyyCommand"
+
+    @field_validator("MFA_ENCRYPTION_KEY")
+    @classmethod
+    def validate_mfa_encryption_key(cls, value: SecretStr) -> SecretStr:
+        try:
+            Fernet(value.get_secret_value().encode("utf-8"))
+        except (TypeError, ValueError) as exc:
+            raise ValueError("MFA encryption key must be a valid Fernet key.") from exc
+
+        return value
 
     @field_validator("JWT_SECRET_KEY")
     @classmethod
     def validate_jwt_secret(cls, value: SecretStr) -> SecretStr:
         if len(value.get_secret_value()) < 64:
-            raise ValueError(
-                "JWT signing secret must contain at least 64 characters."
-            )
+            raise ValueError("JWT signing secret must contain at least 64 characters.")
 
         return value
 

@@ -1,4 +1,3 @@
-
 from __future__ import annotations
 
 import smtplib
@@ -33,9 +32,7 @@ def build_verification_email(
     message = EmailMessage()
 
     message["Subject"] = f"Verify your {settings.APP_NAME} email address"
-    message["From"] = formataddr(
-        (settings.MAIL_FROM_NAME, settings.MAIL_FROM)
-    )
+    message["From"] = formataddr((settings.MAIL_FROM_NAME, settings.MAIL_FROM))
     message["To"] = recipient_email
 
     plain_text = f"""
@@ -120,9 +117,7 @@ def send_email_verification_email(
     password = settings.MAIL_PASSWORD
 
     if bool(username) != bool(password):
-        raise ValueError(
-            "Both SMTP username and password must be configured together."
-        )
+        raise ValueError("Both SMTP username and password must be configured together.")
 
     verification_url = build_verification_url(token)
 
@@ -155,6 +150,4 @@ def send_email_verification_email(
         raise
 
     except (smtplib.SMTPException, OSError) as exc:
-        raise EmailDeliveryError(
-            "Unable to deliver the verification email."
-        ) from exc
+        raise EmailDeliveryError("Unable to deliver the verification email.") from exc

@@ -1,0 +1,21 @@
+name: Release
+
+on:
+  push:
+  workflow_dispatch:
+
+permissions: {}
+
+jobs:
+  release:
+    if: github.ref_name == github.event.repository.default_branch
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+    steps:
+      - name: Create or update release pull request
+        uses: googleapis/release-please-action@v4
+        with:
+          config-file: release-please-config.json
+          manifest-file: .release-please-manifest.json

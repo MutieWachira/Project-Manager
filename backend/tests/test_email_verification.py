@@ -51,9 +51,7 @@ def test_different_tokens_produce_different_hashes():
     first_token = generate_verification_token()
     second_token = generate_verification_token()
 
-    assert hash_verification_token(first_token) != hash_verification_token(
-        second_token
-    )
+    assert hash_verification_token(first_token) != hash_verification_token(second_token)
 
 
 def test_hash_does_not_equal_raw_token():

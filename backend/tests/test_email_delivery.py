@@ -1,4 +1,3 @@
-
 from email.message import EmailMessage
 from unittest.mock import MagicMock, patch
 
@@ -42,9 +41,7 @@ def test_send_verification_email_success():
     smtp_instance = MagicMock()
     smtp_instance.send_message.return_value = {}
 
-    with patch(
-        "app.services.email_delivery.smtplib.SMTP"
-    ) as smtp_factory:
+    with patch("app.services.email_delivery.smtplib.SMTP") as smtp_factory:
         smtp_factory.return_value.__enter__.return_value = smtp_instance
 
         send_email_verification_email(
@@ -59,9 +56,9 @@ def test_send_verification_email_success():
     sent_message = smtp_instance.send_message.call_args.args[0]
 
     assert sent_message["To"] == "user@example.com"
-    assert "test-token" in sent_message.get_body(
-        preferencelist=("plain",)
-    ).get_content()
+    assert (
+        "test-token" in sent_message.get_body(preferencelist=("plain",)).get_content()
+    )
 
 
 def test_send_verification_email_rejects_missing_recipient():
@@ -83,9 +80,7 @@ def test_send_verification_email_rejects_empty_token():
 
 
 def test_smtp_failure_raises_delivery_error():
-    with patch(
-        "app.services.email_delivery.smtplib.SMTP"
-    ) as smtp_factory:
+    with patch("app.services.email_delivery.smtplib.SMTP") as smtp_factory:
         smtp_factory.side_effect = OSError("SMTP unavailable")
 
         with pytest.raises(EmailDeliveryError):
@@ -102,9 +97,7 @@ def test_refused_recipient_raises_delivery_error():
         "user@example.com": (550, b"Recipient rejected")
     }
 
-    with patch(
-        "app.services.email_delivery.smtplib.SMTP"
-    ) as smtp_factory:
+    with patch("app.services.email_delivery.smtplib.SMTP") as smtp_factory:
         smtp_factory.return_value.__enter__.return_value = smtp_instance
 
         with pytest.raises(EmailDeliveryError):

@@ -64,9 +64,7 @@ def test_register_creates_unverified_user(
 
     authentication.register_user(db_session, registration)
 
-    user = db_session.scalar(
-        select(User).where(User.email == registration.email)
-    )
+    user = db_session.scalar(select(User).where(User.email == registration.email))
 
     assert user is not None
     assert user.full_name == "Test Developer"
@@ -100,14 +98,10 @@ def test_register_stores_only_hashed_verification_token(
 
     authentication.register_user(db_session, registration)
 
-    user = db_session.scalar(
-        select(User).where(User.email == registration.email)
-    )
+    user = db_session.scalar(select(User).where(User.email == registration.email))
 
     token_record = db_session.scalar(
-        select(EmailVerificationToken).where(
-            EmailVerificationToken.user_id == user.id
-        )
+        select(EmailVerificationToken).where(EmailVerificationToken.user_id == user.id)
     )
 
     raw_token = captured_emails[0]["token"]
@@ -145,9 +139,7 @@ def test_email_delivery_failure_keeps_account_unverified(
     monkeypatch,
 ):
     def fail_to_send_email(**kwargs):
-        raise authentication.EmailDeliveryError(
-            "Simulated SMTP failure."
-        )
+        raise authentication.EmailDeliveryError("Simulated SMTP failure.")
 
     monkeypatch.setattr(
         authentication,
@@ -157,17 +149,13 @@ def test_email_delivery_failure_keeps_account_unverified(
 
     authentication.register_user(db_session, registration)
 
-    user = db_session.scalar(
-        select(User).where(User.email == registration.email)
-    )
+    user = db_session.scalar(select(User).where(User.email == registration.email))
 
     assert user is not None
     assert user.email_verified_at is None
 
     token_record = db_session.scalar(
-        select(EmailVerificationToken).where(
-            EmailVerificationToken.user_id == user.id
-        )
+        select(EmailVerificationToken).where(EmailVerificationToken.user_id == user.id)
     )
 
     assert token_record is not None
@@ -190,8 +178,6 @@ def test_database_failure_rolls_back_registration(
     with pytest.raises(RuntimeError):
         authentication.register_user(db_session, registration)
 
-    user = db_session.scalar(
-        select(User).where(User.email == registration.email)
-    )
+    user = db_session.scalar(select(User).where(User.email == registration.email))
 
     assert user is None

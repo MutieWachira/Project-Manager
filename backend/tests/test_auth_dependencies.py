@@ -1,4 +1,7 @@
-from datetime import UTC, datetime
+"""Tests for session-aware authentication dependencies."""
+
+from datetime import UTC, datetime, timedelta
+from uuid import uuid4
 
 import pytest
 
@@ -10,9 +13,12 @@ from sqlalchemy.pool import StaticPool
 
 from app.api.dependencies import get_current_user
 from app.core.security import hash_password
-from app.core.tokens import create_access_token
+from app.core.tokens import (
+    create_access_token,
+    create_session_access_token,
+)
 from app.db.base import Base
-from app.models import User
+from app.models import User, UserSession
 
 
 @pytest.fixture
@@ -46,9 +52,7 @@ def active_user(db_session):
     user = User(
         full_name="Test Developer",
         email="developer@example.com",
-        password_hash=hash_password(
-            "A-Strong-Test-Password-2026"
-        ),
+        password_hash=hash_password("A-Strong-Test-Password-2026"),
         is_active=True,
         email_verified_at=datetime.now(UTC),
     )
@@ -59,16 +63,41 @@ def active_user(db_session):
     return user
 
 
-def test_dependency_returns_authenticated_user(
-    db_session,
-    active_user,
-):
-    token = create_access_token(str(active_user.id))
+@pytest.fixture
+def active_session(db_session, active_user):
+    authenticated_session = UserSession(
+        user_id=active_user.id,
+        client_type="web",
+        device_name="Test Browser",
+        expires_at=datetime.now(UTC) + timedelta(days=30),
+    )
 
-    credentials = HTTPAuthorizationCredentials(
+    db_session.add(authenticated_session)
+    db_session.commit()
+
+    return authenticated_session
+
+
+def make_credentials(token: str):
+    return HTTPAuthorizationCredentials(
         scheme="Bearer",
         credentials=token,
     )
+
+
+def make_session_token(user, authenticated_session):
+    return create_session_access_token(
+        str(user.id),
+        session_id=authenticated_session.id,
+    )
+
+
+def test_dependency_returns_authenticated_user(
+    db_session,
+    active_user,
+    active_session,
+):
+    credentials = make_credentials(make_session_token(active_user, active_session))
 
     result = get_current_user(
         credentials=credentials,
@@ -90,14 +119,24 @@ def test_dependency_rejects_missing_credentials(db_session):
 
 
 def test_dependency_rejects_invalid_token(db_session):
-    credentials = HTTPAuthorizationCredentials(
-        scheme="Bearer",
-        credentials="invalid-token",
-    )
+    with pytest.raises(HTTPException) as exc:
+        get_current_user(
+            credentials=make_credentials("invalid-token"),
+            db=db_session,
+        )
+
+    assert exc.value.status_code == 401
+
+
+def test_dependency_rejects_legacy_token(
+    db_session,
+    active_user,
+):
+    token = create_access_token(str(active_user.id))
 
     with pytest.raises(HTTPException) as exc:
         get_current_user(
-            credentials=credentials,
+            credentials=make_credentials(token),
             db=db_session,
         )
 
@@ -105,48 +144,161 @@ def test_dependency_rejects_invalid_token(db_session):
 
 
 def test_dependency_rejects_deleted_user(db_session):
-    from uuid import uuid4
-
-    token = create_access_token(str(uuid4()))
-
-    credentials = HTTPAuthorizationCredentials(
-        scheme="Bearer",
-        credentials=token,
+    token = create_session_access_token(
+        str(uuid4()),
+        session_id=uuid4(),
     )
 
     with pytest.raises(HTTPException) as exc:
         get_current_user(
-            credentials=credentials,
+            credentials=make_credentials(token),
             db=db_session,
         )
 
     assert exc.value.status_code == 401
 
 
-def test_dependency_rejects_inactive_user(db_session):
-    active_user = User(
+def test_dependency_rejects_inactive_user(
+    db_session,
+    active_session,
+):
+    user = User(
         full_name="Inactive Developer",
         email="inactive@example.com",
-        password_hash=hash_password(
-            "A-Strong-Test-Password-2026"
-        ),
+        password_hash=hash_password("A-Strong-Test-Password-2026"),
         is_active=False,
         email_verified_at=datetime.now(UTC),
     )
 
-    db_session.add(active_user)
+    db_session.add(user)
     db_session.commit()
 
-    token = create_access_token(str(active_user.id))
-
-    credentials = HTTPAuthorizationCredentials(
-        scheme="Bearer",
-        credentials=token,
+    token = create_session_access_token(
+        str(user.id),
+        session_id=active_session.id,
     )
 
     with pytest.raises(HTTPException) as exc:
         get_current_user(
-            credentials=credentials,
+            credentials=make_credentials(token),
+            db=db_session,
+        )
+
+    assert exc.value.status_code == 401
+
+
+def test_dependency_rejects_unverified_user(db_session):
+    user = User(
+        full_name="Unverified Developer",
+        email="unverified@example.com",
+        password_hash=hash_password("A-Strong-Test-Password-2026"),
+        is_active=True,
+        email_verified_at=None,
+    )
+
+    db_session.add(user)
+    db_session.flush()
+
+    authenticated_session = UserSession(
+        user_id=user.id,
+        client_type="web",
+        expires_at=datetime.now(UTC) + timedelta(days=30),
+    )
+
+    db_session.add(authenticated_session)
+    db_session.commit()
+
+    token = make_session_token(user, authenticated_session)
+
+    with pytest.raises(HTTPException) as exc:
+        get_current_user(
+            credentials=make_credentials(token),
+            db=db_session,
+        )
+
+    assert exc.value.status_code == 401
+
+
+def test_dependency_rejects_missing_session(
+    db_session,
+    active_user,
+):
+    token = create_session_access_token(
+        str(active_user.id),
+        session_id=uuid4(),
+    )
+
+    with pytest.raises(HTTPException) as exc:
+        get_current_user(
+            credentials=make_credentials(token),
+            db=db_session,
+        )
+
+    assert exc.value.status_code == 401
+
+
+def test_dependency_rejects_session_belonging_to_another_user(
+    db_session,
+    active_user,
+    active_session,
+):
+    another_user = User(
+        full_name="Another Developer",
+        email="another@example.com",
+        password_hash=hash_password("A-Strong-Test-Password-2026"),
+        is_active=True,
+        email_verified_at=datetime.now(UTC),
+    )
+
+    db_session.add(another_user)
+    db_session.commit()
+
+    token = create_session_access_token(
+        str(another_user.id),
+        session_id=active_session.id,
+    )
+
+    with pytest.raises(HTTPException) as exc:
+        get_current_user(
+            credentials=make_credentials(token),
+            db=db_session,
+        )
+
+    assert exc.value.status_code == 401
+
+
+def test_dependency_rejects_revoked_session(
+    db_session,
+    active_user,
+    active_session,
+):
+    active_session.revoked_at = datetime.now(UTC)
+    db_session.commit()
+
+    token = make_session_token(active_user, active_session)
+
+    with pytest.raises(HTTPException) as exc:
+        get_current_user(
+            credentials=make_credentials(token),
+            db=db_session,
+        )
+
+    assert exc.value.status_code == 401
+
+
+def test_dependency_rejects_expired_session(
+    db_session,
+    active_user,
+    active_session,
+):
+    active_session.expires_at = datetime.now(UTC) - timedelta(seconds=1)
+    db_session.commit()
+
+    token = make_session_token(active_user, active_session)
+
+    with pytest.raises(HTTPException) as exc:
+        get_current_user(
+            credentials=make_credentials(token),
             db=db_session,
         )
 

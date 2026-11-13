@@ -104,11 +104,7 @@ def test_registration_endpoint_creates_unverified_account(
     assert response.status_code == 202
 
     with api_database() as db:
-        user = db.scalar(
-            select(User).where(
-                User.email == valid_registration["email"]
-            )
-        )
+        user = db.scalar(select(User).where(User.email == valid_registration["email"]))
 
         assert user is not None
         assert user.email_verified_at is None

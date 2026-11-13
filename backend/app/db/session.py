@@ -1,7 +1,7 @@
 from collections.abc import Generator
 from sqlalchemy import create_engine, text
 from sqlalchemy.orm import Session, sessionmaker
-from app.core.config import settings 
+from app.core.config import settings
 
 engine = create_engine(
     settings.DATABASE_URL,
@@ -17,6 +17,7 @@ SessionLocal = sessionmaker(
     autoflush=False,
 )
 
+
 def get_db() -> Generator[Session, None, None]:
     """Provide a databae session to a fastAPI request
     Always close the session when the request finishes."""
@@ -26,6 +27,7 @@ def get_db() -> Generator[Session, None, None]:
         yield db
     finally:
         db.close()
+
 
 def check_database_connection() -> bool:
     """

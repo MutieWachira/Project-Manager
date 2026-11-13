@@ -128,8 +128,7 @@ def test_expired_token_is_rejected(
     with api_database() as db:
         token_record = db.scalar(
             select(EmailVerificationToken).where(
-                EmailVerificationToken.user_id
-                == verification_account["user_id"]
+                EmailVerificationToken.user_id == verification_account["user_id"]
             )
         )
 

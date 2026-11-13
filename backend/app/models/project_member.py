@@ -20,9 +20,7 @@ from app.models.enums import ProjectRole
 class ProjectMember(Base):
     __tablename__ = "project_members"
 
-    __table_args__ = (
-        Index("ix_project_members_user_id", "user_id"),
-    )
+    __table_args__ = (Index("ix_project_members_user_id", "user_id"),)
 
     project_id: Mapped[UUID] = mapped_column(
         Uuid(as_uuid=True),

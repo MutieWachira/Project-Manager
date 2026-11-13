@@ -1,4 +1,3 @@
-
 import pytest
 
 from datetime import UTC, datetime
@@ -6,7 +5,6 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import Session, sessionmaker
 from sqlalchemy.pool import StaticPool
 
-from app.core.tokens import decode_access_token
 from app.core.security import hash_password
 from app.db.base import Base
 from app.models import User
@@ -45,9 +43,7 @@ def verified_user(db_session):
     user = User(
         full_name="Test Developer",
         email="developer@example.com",
-        password_hash=hash_password(
-            "A-Strong-Test-Password-2026"
-        ),
+        password_hash=hash_password("A-Strong-Test-Password-2026"),
         is_active=True,
         email_verified_at=datetime.now(UTC),
     )
@@ -58,7 +54,7 @@ def verified_user(db_session):
     return user
 
 
-def test_login_returns_valid_access_token(
+def test_login_returns_authenticated_user(
     db_session,
     verified_user,
 ):
@@ -67,14 +63,11 @@ def test_login_returns_valid_access_token(
         password="A-Strong-Test-Password-2026",
     )
 
-    token = authenticate_user(db_session, credentials)
+    user = authenticate_user(db_session, credentials)
 
-    assert token is not None
-
-    payload = decode_access_token(token)
-
-    assert payload["sub"] == str(verified_user.id)
-    assert payload["type"] == "access"
+    assert user is not None
+    assert user.id == verified_user.id
+    assert user.email == "developer@example.com"
 
 
 def test_login_rejects_unknown_email(db_session):
@@ -102,9 +95,7 @@ def test_login_rejects_unverified_email(db_session):
     user = User(
         full_name="Unverified Developer",
         email="unverified@example.com",
-        password_hash=hash_password(
-            "A-Strong-Test-Password-2026"
-        ),
+        password_hash=hash_password("A-Strong-Test-Password-2026"),
         is_active=True,
         email_verified_at=None,
     )
@@ -124,9 +115,7 @@ def test_login_rejects_inactive_account(db_session):
     user = User(
         full_name="Inactive Developer",
         email="inactive@example.com",
-        password_hash=hash_password(
-            "A-Strong-Test-Password-2026"
-        ),
+        password_hash=hash_password("A-Strong-Test-Password-2026"),
         is_active=False,
         email_verified_at=datetime.now(UTC),
     )

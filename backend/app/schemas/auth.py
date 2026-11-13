@@ -1,5 +1,7 @@
-
 """Pydantic schemas for authentication requests and responses."""
+
+from datetime import datetime
+from typing import Literal
 
 from pydantic import BaseModel, EmailStr, Field, field_validator
 
@@ -45,10 +47,12 @@ class VerifyEmailResponse(BaseModel):
 
 
 class LoginRequest(BaseModel):
-    """Validate a login request."""
+    """Validate a password-based login request."""
 
     email: EmailStr
     password: str = Field(min_length=1, max_length=128)
+    client_type: Literal["web", "mobile"] = "web"
+    device_name: str | None = Field(default=None, max_length=120)
 
     @field_validator("email", mode="before")
     @classmethod
@@ -57,13 +61,77 @@ class LoginRequest(BaseModel):
             return value.strip().casefold()
         return value
 
+    @field_validator("device_name")
+    @classmethod
+    def normalize_device_name(cls, value: str | None) -> str | None:
+        if value is None:
+            return None
+
+        normalized = value.strip()
+        return normalized or None
+
+
+class MFAChallengeVerifyRequest(BaseModel):
+    """Validate an MFA login challenge verification request."""
+
+    challenge_token: str = Field(min_length=20, max_length=4096)
+    code: str = Field(min_length=1, max_length=32)
+    device_name: str | None = Field(default=None, max_length=120)
+
+    @field_validator("device_name")
+    @classmethod
+    def normalize_device_name(cls, value: str | None) -> str | None:
+        if value is None:
+            return None
+
+        normalized = value.strip()
+        return normalized or None
+
 
 class LoginResponse(BaseModel):
-    """Return an authenticated access token."""
+    """Represent either an MFA challenge or a completed login."""
+
+    mfa_required: bool = False
+    challenge_token: str | None = None
+    challenge_expires_at: datetime | None = None
+
+    access_token: str | None = None
+    refresh_token: str | None = None
+    token_type: str = "bearer"
+    expires_in: int | None = None
+
+    session_id: str | None = None
+    session_expires_at: datetime | None = None
+
+
+class RefreshRequest(BaseModel):
+    """Validate a mobile refresh-token request."""
+
+    refresh_token: str = Field(min_length=32, max_length=256)
+
+
+class RefreshResponse(BaseModel):
+    """Represent a successfully refreshed authentication session."""
 
     access_token: str
+    refresh_token: str | None = None
     token_type: str = "bearer"
     expires_in: int
+    session_id: str
+    session_expires_at: datetime
+
+
+class LogoutRequest(BaseModel):
+    """Validate a mobile logout request."""
+
+    refresh_token: str = Field(min_length=32, max_length=256)
+
+
+class LogoutResponse(BaseModel):
+    """Represent a successful logout."""
+
+    message: str
+
 
 class CurrentUserResponse(BaseModel):
     """Safe public representation of the authenticated user."""

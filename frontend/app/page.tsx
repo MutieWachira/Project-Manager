@@ -4,6 +4,7 @@ import {
   FolderKanban,
   ShieldCheck,
 } from "lucide-react";
+import Link from "next/link";
 
 const features = [
   {
@@ -60,6 +61,21 @@ export default function Home() {
             track milestones and administer your software projects
             through one centralized platform.
           </p>
+
+          <div className="mt-8 flex flex-wrap gap-4">
+            <Link
+              href="/login"
+              className="inline-flex items-center justify-center rounded-xl bg-blue-600 px-6 py-3 text-sm font-semibold text-white transition hover:bg-blue-500"
+            >
+              Sign in
+            </Link>
+            <Link
+              href="/register"
+              className="inline-flex items-center justify-center rounded-xl border border-slate-700 px-6 py-3 text-sm font-semibold text-slate-200 transition hover:border-blue-500 hover:text-white"
+            >
+              Create an account
+            </Link>
+          </div>
         </div>
 
         <div className="mt-12 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
@@ -86,7 +102,7 @@ export default function Home() {
         </div>
 
         <p className="mt-16 text-sm text-slate-500">
-          SherlskyyCommand · Version 0.1.0 · Development
+          SherlskyyCommand · Versioned releases on GitHub
         </p>
 
       </section>

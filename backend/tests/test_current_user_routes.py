@@ -1,4 +1,6 @@
-from datetime import UTC, datetime
+"""Integration tests for the current-user authentication route."""
+
+from datetime import UTC, datetime, timedelta
 from uuid import UUID
 
 import pytest
@@ -9,11 +11,11 @@ from sqlalchemy.orm import Session, sessionmaker
 from sqlalchemy.pool import StaticPool
 
 from app.core.security import hash_password
-from app.core.tokens import create_access_token
+from app.core.tokens import create_session_access_token
 from app.db.base import Base
 from app.db.session import get_db
 from app.main import app
-from app.models import User
+from app.models import User, UserSession
 
 
 @pytest.fixture
@@ -62,21 +64,34 @@ def authenticated_user(api_database):
         user = User(
             full_name="Test Developer",
             email="developer@example.com",
-            password_hash=hash_password(
-                "A-Strong-Test-Password-2026"
-            ),
+            password_hash=hash_password("A-Strong-Test-Password-2026"),
             is_active=True,
             email_verified_at=datetime.now(UTC),
         )
 
         db.add(user)
+        db.flush()
+
+        authenticated_session = UserSession(
+            user_id=user.id,
+            client_type="web",
+            device_name="Test Browser",
+            expires_at=datetime.now(UTC) + timedelta(days=30),
+        )
+
+        db.add(authenticated_session)
         db.commit()
         db.refresh(user)
+        db.refresh(authenticated_session)
 
-        token = create_access_token(str(user.id))
+        token = create_session_access_token(
+            str(user.id),
+            session_id=authenticated_session.id,
+        )
 
         return {
             "id": str(user.id),
+            "session_id": str(authenticated_session.id),
             "token": token,
         }
 
@@ -87,11 +102,7 @@ def test_me_returns_authenticated_user(
 ):
     response = client.get(
         "/api/v1/auth/me",
-        headers={
-            "Authorization": (
-                f"Bearer {authenticated_user['token']}"
-            )
-        },
+        headers={"Authorization": (f"Bearer {authenticated_user['token']}")},
     )
 
     assert response.status_code == 200
@@ -116,9 +127,7 @@ def test_me_rejects_missing_token(client):
 def test_me_rejects_invalid_token(client):
     response = client.get(
         "/api/v1/auth/me",
-        headers={
-            "Authorization": "Bearer invalid-token"
-        },
+        headers={"Authorization": "Bearer invalid-token"},
     )
 
     assert response.status_code == 401
@@ -136,11 +145,28 @@ def test_me_rejects_deleted_user(
 
     response = client.get(
         "/api/v1/auth/me",
-        headers={
-            "Authorization": (
-                f"Bearer {authenticated_user['token']}"
-            )
-        },
+        headers={"Authorization": (f"Bearer {authenticated_user['token']}")},
     )
 
-    assert response.status_code == 401 
+    assert response.status_code == 401
+
+
+def test_me_rejects_revoked_session(
+    client,
+    authenticated_user,
+    api_database,
+):
+    with api_database() as db:
+        authenticated_session = db.get(
+            UserSession,
+            UUID(authenticated_user["session_id"]),
+        )
+        authenticated_session.revoked_at = datetime.now(UTC)
+        db.commit()
+
+    response = client.get(
+        "/api/v1/auth/me",
+        headers={"Authorization": (f"Bearer {authenticated_user['token']}")},
+    )
+
+    assert response.status_code == 401
