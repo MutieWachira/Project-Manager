@@ -20,7 +20,7 @@ const nextConfig: NextConfig = {
   },
   outputFileTracingRoot: path.resolve(process.cwd(), ".."),
   outputFileTracingIncludes: {
-    "/api/whats-new": ["../CHANGELOG.md"],
+    "/api/whats-new": ["./CHANGELOG.md"],
   },
   turbopack: {
     rules: {

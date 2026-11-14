@@ -15,6 +15,13 @@ const icons = {
   clock: 'clock.fill',
 } as const;
 
+const accents = {
+  folder: '#2563EB',
+  activity: '#0891B2',
+  check: '#059669',
+  clock: '#D97706',
+} as const;
+
 interface StatCardProps {
   stat: DashboardStat;
   compact?: boolean;
@@ -26,6 +33,7 @@ export default function StatCard({
 }: StatCardProps) {
   const colorScheme = useColorScheme();
   const theme = Colors[colorScheme];
+  const accent = accents[stat.icon];
 
   return (
     <View
@@ -34,8 +42,8 @@ export default function StatCard({
         {
           backgroundColor: theme.surface,
           borderColor: theme.border,
-          padding: compact ? 12 : 16,
-          gap: compact ? 7 : 10,
+          padding: compact ? 13 : 17,
+          gap: compact ? 8 : 12,
         },
       ]}
     >
@@ -44,15 +52,13 @@ export default function StatCard({
           {stat.label}
         </Text>
 
-        <SymbolView
-          name={{
-            ios: icons[stat.icon],
-            android: 'circle',
-            web: 'circle',
-          }}
-          tintColor={theme.tint}
-          size={compact ? 18 : 21}
-        />
+        <View style={[styles.iconWrap, { backgroundColor: `${accent}18` }]}>
+          <SymbolView
+            name={{ ios: icons[stat.icon], android: 'circle', web: 'circle' }}
+            tintColor={accent}
+            size={compact ? 16 : 18}
+          />
+        </View>
       </View>
 
       <Text style={[styles.value, compact && styles.compactValue]}>
@@ -81,13 +87,20 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     gap: 6,
   },
+  iconWrap: {
+    width: 32,
+    height: 32,
+    borderRadius: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   label: {
     fontSize: 12,
     fontWeight: '600',
     flexShrink: 1,
   },
   value: {
-    fontSize: 28,
+    fontSize: 30,
     fontWeight: '800',
   },
   compactValue: {
@@ -95,5 +108,6 @@ const styles = StyleSheet.create({
   },
   description: {
     fontSize: 11,
+    lineHeight: 16,
   },
 });

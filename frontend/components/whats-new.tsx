@@ -130,7 +130,7 @@ export default function WhatsNew({ userId }: Readonly<{ userId: string }>) {
         aria-haspopup="dialog"
       >
         <Sparkles size={17} />
-        What&apos;s new{release ? ` · ${release.version}` : ""}
+        What&apos;s new{release ? ` · Web v${release.version}` : ""}
       </button>
 
       {(error || storageError) && !isOpen && (
@@ -159,7 +159,7 @@ export default function WhatsNew({ userId }: Readonly<{ userId: string }>) {
             <header className="flex items-start justify-between gap-4 border-b border-slate-800 px-6 py-5">
               <div>
                 <p className="text-sm font-medium text-blue-400">
-                  SherlskyyCommand release
+                  Web application release
                 </p>
                 <h2
                   id="whats-new-title"

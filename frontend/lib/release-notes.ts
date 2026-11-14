@@ -81,7 +81,7 @@ function parseReleaseNotes(changelog: string): ReleaseNotes | null {
 }
 
 export async function getLatestReleaseNotes(): Promise<ReleaseNotes | null> {
-  const changelogPath = path.resolve(process.cwd(), "..", "CHANGELOG.md");
+  const changelogPath = path.resolve(process.cwd(), "CHANGELOG.md");
   const changelog = await readFile(changelogPath, "utf8");
 
   return parseReleaseNotes(changelog);

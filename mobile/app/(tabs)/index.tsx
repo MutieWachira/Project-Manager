@@ -1,5 +1,5 @@
 
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
@@ -19,13 +19,15 @@ import { useColorScheme } from '@/components/useColorScheme';
 import { Text } from '@/components/Themed';
 import { useAuth } from '@/components/providers/auth-provider';
 import { getApiWebSocketUrl } from '@/lib/api/api-client';
+import { useProjects } from '@/hooks/use-projects';
 
 import StatCard from '@/components/dashboard/StatCard';
 import ProjectCard from '@/components/dashboard/ProjectCard';
+import WhatsNew from '@/components/dashboard/WhatsNew';
 
-import {
-  dashboardStats,
-  recentProjects,
+import type {
+  DashboardProject,
+  DashboardStat,
 } from '@/data/dashboard/dashboard-data';
 
 type DatabaseStatus = 'checking' | 'online' | 'offline';
@@ -55,16 +57,39 @@ function getDatabaseStatus(message: unknown): DatabaseStatus | null {
 export default function DashboardScreen() {
   const colorScheme = useColorScheme();
   const theme = Colors[colorScheme];
-  const appVersion = Constants.expoConfig?.version;
+  const appVersion = Constants.expoConfig?.version ?? 'Unknown';
   const { width, height, fontScale } = useWindowDimensions();
   const insets = useSafeAreaInsets();
-  const { logout } = useAuth();
+  const { logout, user } = useAuth();
+  const { projects, isLoading: isLoadingProjects, error: projectsError, refresh } = useProjects();
   const compactLayout = width < 380 || fontScale > 1.15;
   const compactHeight = height < 720;
   const compactSpacing = compactLayout || compactHeight;
   const [databaseStatus, setDatabaseStatus] =
     useState<DatabaseStatus>('checking');
   const [isLoggingOut, setIsLoggingOut] = useState(false);
+
+  const dashboardStats = useMemo<DashboardStat[]>(() => {
+    const active = projects.filter((project) => project.status === 'active').length;
+    const planned = projects.filter((project) => project.status === 'planned').length;
+    const completed = projects.filter((project) => project.status === 'completed').length;
+
+    return [
+      { id: 'projects', label: 'Total projects', value: projects.length, description: 'Across your workspace', icon: 'folder' },
+      { id: 'active', label: 'Active projects', value: active, description: 'Currently in progress', icon: 'activity' },
+      { id: 'completed', label: 'Completed', value: completed, description: 'Successfully delivered', icon: 'check' },
+      { id: 'planned', label: 'Planned', value: planned, description: 'Ready to begin', icon: 'clock' },
+    ];
+  }, [projects]);
+
+  const recentProjects = useMemo<DashboardProject[]>(() => projects.slice(0, 4).map((project) => ({
+    id: project.id,
+    name: project.name,
+    description: project.description || 'No description provided.',
+    status: project.status === 'completed' ? 'Completed' : project.status === 'planned' ? 'Planning' : 'Active',
+    progress: project.status === 'completed' ? 100 : project.status === 'active' ? 60 : 20,
+    updatedAt: 'Recently updated',
+  })), [projects]);
 
   async function handleLogout() {
     setIsLoggingOut(true);
@@ -159,7 +184,7 @@ export default function DashboardScreen() {
           </Text>
 
           <Text style={[styles.subtitle, { color: theme.muted }]}>
-            Here&apos;s an overview of your projects.
+            Your work, priorities, and progress in one place.
           </Text>
         </View>
 
@@ -228,10 +253,38 @@ export default function DashboardScreen() {
         </View>
       </View>
 
+      <View style={[styles.commandCard, { backgroundColor: theme.tint }]}>
+        <View style={styles.commandCopy}>
+          <Text style={styles.commandEyebrow}>COMMAND CENTER</Text>
+          <Text style={styles.commandTitle}>Keep your projects moving forward.</Text>
+          <Text style={styles.commandText}>Review what matters most and stay aligned with your workspace.</Text>
+        </View>
+        <View style={styles.commandIcon}>
+          <SymbolView
+            name={{ ios: 'sparkles', android: 'auto_awesome', web: 'auto_awesome' }}
+            tintColor="#FFFFFF"
+            size={26}
+          />
+        </View>
+      </View>
+
+      <WhatsNew userId={user?.id ?? 'anonymous'} version={appVersion} />
+
       <View style={[styles.section, compactSpacing && styles.compactSection]}>
-        <Text style={styles.sectionTitle}>
-          Workspace overview
-        </Text>
+        <View style={styles.sectionHeader}>
+          <View>
+            <Text style={styles.sectionTitle}>Workspace overview</Text>
+            <Text style={[styles.sectionSubtitle, { color: theme.muted }]}>A live snapshot of your portfolio</Text>
+          </View>
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel="Refresh dashboard"
+            onPress={() => void refresh()}
+            style={({ pressed }) => [styles.refreshButton, { backgroundColor: theme.surface, borderColor: theme.border, opacity: pressed ? 0.7 : 1 }]}
+          >
+            {isLoadingProjects ? <ActivityIndicator color={theme.tint} size="small" /> : <SymbolView name={{ ios: 'arrow.clockwise', android: 'refresh', web: 'refresh' }} tintColor={theme.tint} size={18} />}
+          </Pressable>
+        </View>
 
         <View
           style={[
@@ -265,23 +318,23 @@ export default function DashboardScreen() {
             </Text>
           </View>
 
-          <SymbolView
-            name={{
-              ios: 'arrow.up.right',
-              android: 'arrow_forward',
-              web: 'arrow_right',
-            }}
-            tintColor={theme.tint}
-            size={20}
-          />
+          <View style={[styles.countBadge, { backgroundColor: `${theme.tint}18` }]}>
+            <Text style={[styles.countText, { color: theme.tint }]}>{projects.length}</Text>
+          </View>
         </View>
 
-        <View
-          style={[
-            styles.projectsList,
-            compactSpacing && styles.compactProjectsList,
-          ]}
-        >
+        {projectsError ? (
+          <View style={[styles.notice, { backgroundColor: '#DC262614', borderColor: '#DC262640' }]}>
+            <Text style={[styles.noticeText, { color: '#DC2626' }]}>{projectsError}</Text>
+          </View>
+        ) : recentProjects.length === 0 && !isLoadingProjects ? (
+          <View style={[styles.emptyCard, { backgroundColor: theme.surface, borderColor: theme.border }]}>
+            <Text style={styles.emptyTitle}>Your workspace is ready</Text>
+            <Text style={[styles.emptyText, { color: theme.muted }]}>Create your first project from the Projects tab to start tracking your work.</Text>
+          </View>
+        ) : (
+
+        <View style={[styles.projectsList, compactSpacing && styles.compactProjectsList]}>
           {recentProjects.map((project) => (
             <ProjectCard
               key={project.id}
@@ -290,12 +343,13 @@ export default function DashboardScreen() {
             />
           ))}
         </View>
+        )}
       </View>
 
       <View style={styles.footer}>
         <Text style={[styles.footerText, { color: theme.muted }]}>
           SherlskyyCommand · Mobile app
-          {appVersion ? ` v${appVersion}` : ''}
+          {` v${appVersion}`}
         </Text>
       </View>
     </ScrollView>
@@ -318,6 +372,19 @@ const styles = StyleSheet.create({
     flex: 1,
     gap: 6,
   },
+  commandCard: {
+    minHeight: 150,
+    padding: 20,
+    borderRadius: 24,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    overflow: 'hidden',
+  },
+  commandCopy: { flex: 1, gap: 7, paddingRight: 10 },
+  commandEyebrow: { color: '#BFDBFE', fontSize: 10, fontWeight: '800', letterSpacing: 1.2 },
+  commandTitle: { color: '#FFFFFF', fontSize: 21, lineHeight: 27, fontWeight: '800' },
+  commandText: { color: '#DBEAFE', fontSize: 12, lineHeight: 18 },
+  commandIcon: { width: 48, height: 48, borderRadius: 16, backgroundColor: '#FFFFFF22', alignItems: 'center', justifyContent: 'center' },
   greeting: {
     fontSize: 10,
     fontWeight: '800',
@@ -393,6 +460,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
   },
+  refreshButton: { width: 38, height: 38, borderRadius: 12, borderWidth: 1, alignItems: 'center', justifyContent: 'center' },
+  countBadge: { minWidth: 32, height: 28, borderRadius: 14, paddingHorizontal: 9, alignItems: 'center', justifyContent: 'center' },
+  countText: { fontSize: 12, fontWeight: '800' },
   sectionSubtitle: {
     fontSize: 12,
     marginTop: 5,
@@ -403,6 +473,11 @@ const styles = StyleSheet.create({
   compactProjectsList: {
     gap: 10,
   },
+  notice: { borderWidth: 1, borderRadius: 16, padding: 14 },
+  noticeText: { fontSize: 12, fontWeight: '600', lineHeight: 18 },
+  emptyCard: { borderWidth: 1, borderRadius: 20, padding: 20, gap: 7 },
+  emptyTitle: { fontSize: 15, fontWeight: '800' },
+  emptyText: { fontSize: 12, lineHeight: 18 },
   footer: {
     alignItems: 'center',
     paddingTop: 8,

@@ -32,8 +32,8 @@ export default function ProjectCard({
         {
           backgroundColor: theme.surface,
           borderColor: theme.border,
-          padding: compact ? 12 : 16,
-          gap: compact ? 10 : 14,
+          padding: compact ? 13 : 17,
+          gap: compact ? 11 : 15,
         },
       ]}
     >
@@ -96,7 +96,7 @@ const styles = StyleSheet.create({
   card: {
     padding: 16,
     borderWidth: 1,
-    borderRadius: 16,
+    borderRadius: 20,
     gap: 14,
   },
   topRow: {
@@ -110,15 +110,15 @@ const styles = StyleSheet.create({
     gap: 5,
   },
   name: {
-    fontSize: 15,
+    fontSize: 16,
     fontWeight: '700',
   },
   description: {
     fontSize: 12,
   },
   status: {
-    paddingHorizontal: 9,
-    paddingVertical: 5,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
     borderRadius: 20,
   },
   statusText: {
@@ -137,7 +137,7 @@ const styles = StyleSheet.create({
     fontWeight: '700',
   },
   progressTrack: {
-    height: 7,
+    height: 8,
     borderRadius: 10,
     overflow: 'hidden',
   },
