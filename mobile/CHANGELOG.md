@@ -2,13 +2,6 @@
 
 All notable changes to the SherlskyyCommand mobile app will be documented here.
 
-## [1.2.0](https://github.com/MutieWachira/Project-Manager/compare/mobile-v1.1.0...mobile-v1.2.0) (2026-11-14)
-
-
-### Features
-
-* **dashboard:** redesign web and mobile dashboards ([edeb0d9](https://github.com/MutieWachira/Project-Manager/commit/edeb0d960dc42171862088ae3c2fc98cae226551))
-
 ## [Unreleased]
 
 ### Added
