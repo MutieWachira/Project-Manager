@@ -2,6 +2,13 @@
 
 All notable changes to SherlskyyCommand will be documented here.
 
+## [0.4.1](https://github.com/MutieWachira/Project-Manager/compare/v0.4.0...v0.4.1) (2026-11-14)
+
+
+### Bug Fixes
+
+* Fixed release bug issue. ([0adf775](https://github.com/MutieWachira/Project-Manager/commit/0adf775808963d088d76a733f9caa2308ed4d8bb))
+
 ## [0.4.0](https://github.com/MutieWachira/Project-Manager/compare/v0.3.0...v0.4.0) (2026-11-14)
 
 
