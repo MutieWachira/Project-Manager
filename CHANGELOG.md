@@ -2,6 +2,13 @@
 
 All notable changes to SherlskyyCommand will be documented here.
 
+## [0.4.0](https://github.com/MutieWachira/Project-Manager/compare/v0.3.0...v0.4.0) (2026-11-14)
+
+
+### Features
+
+* **mobile:** implement authentication and protected navigation ([b12bb08](https://github.com/MutieWachira/Project-Manager/commit/b12bb08c17ab9f221ec51e701e506be2fabcd67c))
+
 ## [0.3.0](https://github.com/MutieWachira/Project-Manager/compare/v0.2.0...v0.3.0) (2026-11-13)
 
 
