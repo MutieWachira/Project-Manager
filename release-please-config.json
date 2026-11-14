@@ -6,6 +6,7 @@
   "packages": {
     ".": {
       "release-type": "simple",
+      "component": "web",
       "changelog-path": "CHANGELOG.md",
       "version-file": "version.txt",
       "exclude-paths": [
@@ -25,7 +26,7 @@
       "extra-files": [
         {
           "type": "json",
-          "path": "mobile/app.json",
+          "path": "app.json",
           "jsonpath": "$.expo.version"
         }
       ]
