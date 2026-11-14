@@ -1,10 +1,25 @@
 """SherlskyyCommand FastAPI application entry point."""
 
+from collections.abc import AsyncIterator
+from contextlib import asynccontextmanager
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.api.routes import auth, health, projects
 from app.core.config import settings
+from app.services.database_status import DatabaseStatusMonitor
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI) -> AsyncIterator[None]:
+    monitor = DatabaseStatusMonitor()
+    app.state.database_status_monitor = monitor
+    await monitor.start()
+    try:
+        yield
+    finally:
+        await monitor.stop()
 
 
 app = FastAPI(
@@ -16,6 +31,7 @@ app = FastAPI(
     ),
     docs_url="/docs",
     redoc_url="/redoc",
+    lifespan=lifespan,
 )
 
 # Restrict browser access to the configured frontend origin.

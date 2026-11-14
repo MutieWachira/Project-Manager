@@ -247,7 +247,7 @@ export default function LoginPage() {
         </div>
 
         <p className="relative z-10 text-sm text-slate-500">
-          SherlskyyCommand · Version 0.1.0
+          SherlskyyCommand · Version {process.env.NEXT_PUBLIC_APP_VERSION}
         </p>
       </section>
 
