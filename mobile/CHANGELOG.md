@@ -2,6 +2,13 @@
 
 All notable changes to the SherlskyyCommand mobile app will be documented here.
 
+## [1.3.0](https://github.com/MutieWachira/Project-Manager/compare/mobile-v1.2.0...mobile-v1.3.0) (2026-11-26)
+
+
+### Features
+
+* add project operations and GitHub App integration. ([431cdad](https://github.com/MutieWachira/Project-Manager/commit/431cdadd34a0d424c87444b4d5ea159746cf16f0))
+
 ## [1.2.0](https://github.com/MutieWachira/Project-Manager/compare/mobile-v1.1.0...mobile-v1.2.0) (2026-11-14)
 
 
