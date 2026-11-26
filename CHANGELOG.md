@@ -1,13 +1,6 @@
 # Changelog
 
 All notable changes to SherlskyyCommand will be documented here.
-## [0.5.0](https://github.com/MutieWachira/Project-Manager/compare/v0.4.1...v0.5.0) (2026-11-26)
-
-
-### Features
-
-* add project operations and GitHub App integration. ([431cdad](https://github.com/MutieWachira/Project-Manager/commit/431cdadd34a0d424c87444b4d5ea159746cf16f0))
-
 ## [0.5.0]
 ### Added
 
