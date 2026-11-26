@@ -1,5 +1,5 @@
+# Application dependencies
 fastapi
-uvicorn[standard]
 sqlalchemy
 alembic
 pydantic
@@ -11,3 +11,10 @@ email-validator
 pyotp
 qrcode[pil]
 slowapi
+uvicorn==0.54.0
+
+# Testing and development dependencies
+pytest
+pytest-cov
+httpx
+ruff

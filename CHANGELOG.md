@@ -1,59 +1,75 @@
 # Changelog
 
 All notable changes to SherlskyyCommand will be documented here.
+## [0.5.0]
+### Added
+
+- Introduced the project operations foundation, including project environments, integrations, events, and incidents.
+- Added project environment management with primary and active environment constraints.
+- Added project integration management with role-based access control and protected configuration data.
+- Implemented GitHub App installation and OAuth callback workflows.
+- Added secure, single-use GitHub installation state validation with expiration and replay protection.
+- Added GitHub integration connection and reconnection workflows to the web dashboard.
+- Added project operations API schemas, models, routes, and database migrations.
+
+### Changed
+
+- Improved authentication dependencies, email delivery, login handling, and project API behavior.
+- Updated the web dashboard, registration page, project integration interface, and What's New component.
+- Consolidated backend application, testing, and development dependencies into `backend/requirements.txt`.
+- Updated Expo mobile dependencies and registered the Expo Web Browser plugin.
+
+### Security
+
+- Added validation of GitHub App installation ownership and application identity.
+- Prevented OAuth access tokens and sensitive integration configuration from being exposed through API responses.
+- Added protection against expired, replayed, or invalid GitHub installation callback states.
+
+### Tests and Verification
+
+- Expanded backend tests for authentication, email delivery, login, project operations, and GitHub App integration.
+- Verified the backend test suite successfully.
+- Verified frontend and mobile TypeScript checks.
+- Verified Expo dependency compatibility.
+- Verified Alembic migration consistency and dependency health.
+
+### Current Status
+
+- The project is in active development following version `0.4.1`.
+- Project operations and GitHub App integration are implemented, with the GitHub integration connection flow available through the web dashboard.
+- GitHub repository synchronization is not yet implemented.
+- Release Please is configured to prepare release pull requests from Conventional Commits and publish GitHub Releases when those pull requests are merged.
 
 ## [0.4.1](https://github.com/MutieWachira/Project-Manager/compare/v0.4.0...v0.4.1) (2026-11-14)
 
-
 ### Bug Fixes
 
-* Fixed release bug issue. ([0adf775](https://github.com/MutieWachira/Project-Manager/commit/0adf775808963d088d76a733f9caa2308ed4d8bb))
+- Fixed release bug issue. ([0adf775](https://github.com/MutieWachira/Project-Manager/commit/0adf775808963d088d76a733f9caa2308ed4d8bb))
 
 ## [0.4.0](https://github.com/MutieWachira/Project-Manager/compare/v0.3.0...v0.4.0) (2026-11-14)
 
-
 ### Features
 
-* **dashboard:** redesign web and mobile dashboards ([edeb0d9](https://github.com/MutieWachira/Project-Manager/commit/edeb0d960dc42171862088ae3c2fc98cae226551))
-* **mobile:** implement authentication and protected navigation ([b12bb08](https://github.com/MutieWachira/Project-Manager/commit/b12bb08c17ab9f221ec51e701e506be2fabcd67c))
+- **dashboard:** Redesign web and mobile dashboards ([edeb0d9](https://github.com/MutieWachira/Project-Manager/commit/edeb0d960dc42171862088ae3c2fc98cae226551))
+- **mobile:** Implement authentication and protected navigation ([b12bb08](https://github.com/MutieWachira/Project-Manager/commit/b12bb08c17ab9f221ec51e701e506be2fabcd67c))
 
 ## [0.3.0](https://github.com/MutieWachira/Project-Manager/compare/v0.2.0...v0.3.0) (2026-11-13)
 
-
 ### Features
 
-* add secure auth, project management, and release updates. ([476f217](https://github.com/MutieWachira/Project-Manager/commit/476f217552b63a1add0c71e130b000f04a378e04))
+- Add secure authentication, project management, and release updates. ([476f217](https://github.com/MutieWachira/Project-Manager/commit/476f217552b63a1add0c71e130b000f04a378e04))
 
 ## [0.2.0](https://github.com/MutieWachira/Project-Manager/compare/v0.1.0...v0.2.0) (2026-11-13)
 
-
 ### Features
 
-* add secure auth, project management, and release updates. ([476f217](https://github.com/MutieWachira/Project-Manager/commit/476f217552b63a1add0c71e130b000f04a378e04))
+- Add secure authentication, project management, and release updates. ([476f217](https://github.com/MutieWachira/Project-Manager/commit/476f217552b63a1add0c71e130b000f04a378e04))
 
-## [Unreleased]
-
-### Added
-- Account registration, email verification, sign-in, and protected dashboard flows.
-- Project creation and listing for the signed-in user's workspace.
-- TOTP multi-factor authentication challenges during sign-in, with encrypted authenticator secrets and replay protection.
-- Database-backed user sessions and rotating refresh tokens, including refresh-token reuse detection and session revocation.
-- Release Please automation that prepares a version and changelog pull request and publishes a GitHub Release when merged.
-- A dashboard "What's New" dialog that presents the latest published changelog entry once per user and release.
-
-### Changed
-- Web refresh tokens are held in secure HttpOnly cookies; API authentication now associates access tokens with revocable sessions.
-- The backend reports its application version from the root `version.txt` file managed by release automation.
-- Browser API access is restricted to the configured frontend origin.
-
-### Current status
-- The project is in active development at version `0.1.0`; these unreleased changes have not yet been published as a GitHub Release.
-- The release workflow is configured for the default branch. Its first release pull request requires pushing Conventional Commits to GitHub and allowing GitHub Actions to create pull requests.
-- Backend MFA enrollment and verification services are present, but self-service MFA setup/management endpoints and dashboard UI are not yet wired up.
 
 ## [0.1.0] - 2026-11-11
 
 ### Added
+
 - Initial project structure.
 - Git version control initialization.
 - Root README documentation.

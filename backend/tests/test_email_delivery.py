@@ -3,6 +3,8 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
+from app.core.config import settings
+
 from app.services.email_delivery import (
     EmailDeliveryError,
     build_verification_email,
@@ -14,7 +16,7 @@ from app.services.email_delivery import (
 def test_build_verification_url():
     url = build_verification_url("test-token")
 
-    assert url.startswith("http://localhost:3000/verify-email?")
+    assert url.startswith(f"{settings.FRONTEND_URL.rstrip(chr(47))}/verify-email?")
     assert "token=test-token" in url
 
 

@@ -11,7 +11,7 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import Session, sessionmaker
 from sqlalchemy.pool import StaticPool
 
-from app.api.dependencies import get_current_user
+from app.api.dependencies import get_current_user, get_current_user_session
 from app.core.security import hash_password
 from app.core.tokens import (
     create_access_token,
@@ -303,3 +303,22 @@ def test_dependency_rejects_expired_session(
         )
 
     assert exc.value.status_code == 401
+
+
+def test_dependency_returns_authenticated_user_and_session(
+    db_session,
+    active_user,
+    active_session,
+):
+    credentials = make_credentials(
+        make_session_token(active_user, active_session)
+    )
+
+    user, authenticated_session = get_current_user_session(
+        credentials=credentials,
+        db=db_session,
+    )
+
+    assert user.id == active_user.id
+    assert authenticated_session.id == active_session.id
+    assert authenticated_session.user_id == user.id

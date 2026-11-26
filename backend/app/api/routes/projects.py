@@ -4,6 +4,7 @@
 import re
 import unicodedata
 
+from uuid import UUID
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy import exists, or_, select
 from sqlalchemy.exc import IntegrityError
@@ -134,3 +135,40 @@ def list_projects(
     )
 
     return list(db.scalars(statement).all())
+
+@router.get(
+    "/{project_id}",
+    response_model=ProjectRead,
+    summary="Get project details",
+)
+def get_project(
+    project_id: UUID,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+) -> Project:
+    """Return a project only when the authenticated user can access it."""
+
+    is_project_member = exists(
+        select(ProjectMember.project_id).where(
+            ProjectMember.project_id == Project.id,
+            ProjectMember.user_id == current_user.id,
+        )
+    )
+
+    statement = select(Project).where(
+        Project.id == project_id,
+        or_(
+            Project.created_by_id == current_user.id,
+            is_project_member,
+        ),
+    )
+
+    project = db.scalar(statement)
+
+    if project is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Project not found.",
+        )
+
+    return project

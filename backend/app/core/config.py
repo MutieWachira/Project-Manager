@@ -23,6 +23,16 @@ class Settings(BaseSettings):
 
     FRONTEND_URL: str = "http://localhost:3000"
 
+    # GitHub App integration. These remain optional until the app is configured.
+    GITHUB_APP_ID: str | None = None
+    GITHUB_APP_SLUG: str | None = None
+    GITHUB_APP_PRIVATE_KEY_PATH: Path | None = None
+    GITHUB_APP_CLIENT_ID: str | None = None
+    GITHUB_APP_CLIENT_SECRET: SecretStr | None = None
+    GITHUB_APP_CALLBACK_URL: str | None = None
+    GITHUB_APP_SETUP_URL: str | None = None
+    GITHUB_APP_WEBHOOK_SECRET: SecretStr | None = None
+
     DATABASE_URL: str = Field(
         default="postgresql+psycopg://localhost/sherlskyycommand_db"
     )
@@ -80,6 +90,80 @@ class Settings(BaseSettings):
             raise ValueError("JWT signing secret must contain at least 64 characters.")
 
         return value
+
+    @field_validator("GITHUB_APP_ID")
+    @classmethod
+    def validate_github_app_id(cls, value: str | None) -> str | None:
+        if value is None:
+            return None
+
+        value = value.strip()
+        if not value.isdigit():
+            raise ValueError("GitHub App ID must contain digits only.")
+
+        return value
+
+    @field_validator("GITHUB_APP_SLUG")
+    @classmethod
+    def validate_github_app_slug(cls, value: str | None) -> str | None:
+        if value is None:
+            return None
+
+        value = value.strip()
+        if not value or any(
+            not (character.islower() or character.isdigit() or character == "-")
+            for character in value
+        ):
+            raise ValueError("GitHub App slug must use lowercase letters, digits, and hyphens.")
+
+        return value
+
+    @field_validator("GITHUB_APP_PRIVATE_KEY_PATH")
+    @classmethod
+    def validate_github_private_key_path(
+        cls,
+        value: Path | None,
+    ) -> Path | None:
+        if value is None:
+            return None
+
+        value = value.expanduser()
+        if not value.is_absolute():
+            raise ValueError("GitHub App private key path must be absolute.")
+
+        try:
+            value.resolve().relative_to(PROJECT_ROOT.resolve())
+        except ValueError:
+            return value
+
+        raise ValueError("GitHub App private key must be stored outside the project directory.")
+
+    @property
+    def github_app_ready(self) -> bool:
+        """Return whether the minimum GitHub App credentials are available."""
+        if not all((
+            self.GITHUB_APP_ID,
+            self.GITHUB_APP_SLUG,
+            self.GITHUB_APP_PRIVATE_KEY_PATH,
+            self.GITHUB_APP_CLIENT_ID,
+            self.GITHUB_APP_CLIENT_SECRET,
+            self.GITHUB_APP_CALLBACK_URL,
+            self.GITHUB_APP_SETUP_URL,
+        )):
+            return False
+
+        key_path = self.GITHUB_APP_PRIVATE_KEY_PATH
+        if key_path is None or not key_path.is_file():
+            return False
+
+        try:
+            import stat
+
+            permissions = stat.S_IMODE(key_path.stat().st_mode)
+        except OSError:
+            return False
+
+        return permissions & 0o077 == 0
 
     # Email configuration
     MAIL_HOST: str = "127.0.0.1"

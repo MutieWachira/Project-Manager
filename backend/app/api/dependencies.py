@@ -28,11 +28,11 @@ def _as_utc(value: datetime) -> datetime:
     return value.astimezone(UTC)
 
 
-def get_current_user(
+def get_current_user_session(
     credentials: HTTPAuthorizationCredentials | None = Depends(bearer_scheme),
     db: Session = Depends(get_db),
-) -> User:
-    """Resolve a user only when their database-backed session is valid."""
+) -> tuple[User, UserSession]:
+    """Resolve both the user and the exact valid database-backed session."""
 
     unauthorized = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
@@ -73,4 +73,17 @@ def get_current_user(
     if _as_utc(authenticated_session.expires_at) <= now:
         raise unauthorized
 
+    return user, authenticated_session
+
+
+def get_current_user(
+    credentials: HTTPAuthorizationCredentials | None = Depends(bearer_scheme),
+    db: Session = Depends(get_db),
+) -> User:
+    """Resolve the authenticated user while preserving the existing API."""
+
+    user, _ = get_current_user_session(
+        credentials=credentials,
+        db=db,
+    )
     return user

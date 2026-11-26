@@ -3,6 +3,8 @@ from uuid import UUID
 
 import pyotp
 import pytest
+
+from app.core.config import settings
 from fastapi.testclient import TestClient
 from sqlalchemy import create_engine, select
 from sqlalchemy.orm import Session, sessionmaker
@@ -132,7 +134,7 @@ def test_web_login_creates_session_and_refresh_cookie(
 
     assert data["mfa_required"] is False
     assert data["token_type"] == "bearer"
-    assert data["expires_in"] == 600
+    assert data["expires_in"] == settings.ACCESS_TOKEN_EXPIRE_MINUTES * 60
     assert isinstance(data["access_token"], str)
     assert data["refresh_token"] is None
     assert data["session_id"] is not None
@@ -302,7 +304,7 @@ def test_web_mfa_login_completes_with_refresh_cookie(
     assert data["access_token"]
     assert data["refresh_token"] is None
     assert data["token_type"] == "bearer"
-    assert data["expires_in"] == 600
+    assert data["expires_in"] == settings.ACCESS_TOKEN_EXPIRE_MINUTES * 60
     assert data["session_id"]
 
     payload = decode_session_access_token(data["access_token"])
@@ -490,7 +492,7 @@ def test_web_refresh_rotates_cookie_and_returns_new_access_token(
 
     refresh_response = client.post(
         "/api/v1/auth/refresh",
-        headers={"Origin": "http://localhost:3000"},
+        headers={"Origin": settings.FRONTEND_URL.rstrip("/")},
     )
 
     assert refresh_response.status_code == 200
@@ -584,7 +586,7 @@ def test_web_refresh_rejects_wrong_origin_without_consuming_token(
 
     accepted_response = client.post(
         "/api/v1/auth/refresh",
-        headers={"Origin": "http://localhost:3000"},
+        headers={"Origin": settings.FRONTEND_URL.rstrip("/")},
     )
 
     assert accepted_response.status_code == 200
@@ -621,7 +623,7 @@ def test_refresh_rejects_cookie_and_body_credentials_together(
     response = client.post(
         "/api/v1/auth/refresh",
         json={"refresh_token": cookie_token},
-        headers={"Origin": "http://localhost:3000"},
+        headers={"Origin": settings.FRONTEND_URL.rstrip("/")},
     )
 
     assert response.status_code == 400
@@ -652,7 +654,7 @@ def test_web_logout_revokes_session_and_clears_cookie(
 
     logout_response = client.post(
         "/api/v1/auth/logout",
-        headers={"Origin": "http://localhost:3000"},
+        headers={"Origin": settings.FRONTEND_URL.rstrip("/")},
         cookies={"sherlskyycommand_refresh": refresh_token},
     )
 
@@ -683,7 +685,7 @@ def test_web_logout_revokes_session_and_clears_cookie(
 
     refresh_response = client.post(
         "/api/v1/auth/refresh",
-        headers={"Origin": "http://localhost:3000"},
+        headers={"Origin": settings.FRONTEND_URL.rstrip("/")},
         cookies={"sherlskyycommand_refresh": refresh_token},
     )
 
@@ -803,7 +805,7 @@ def test_logout_rejects_cookie_and_body_credentials_together(
 
     response = client.post(
         "/api/v1/auth/logout",
-        headers={"Origin": "http://localhost:3000"},
+        headers={"Origin": settings.FRONTEND_URL.rstrip("/")},
         cookies={"sherlskyycommand_refresh": refresh_token},
         json={"refresh_token": refresh_token},
     )
@@ -849,7 +851,7 @@ def test_mobile_refresh_token_cannot_revoke_web_session(
     # Present a mobile token through the browser-cookie channel.
     response = client.post(
         "/api/v1/auth/logout",
-        headers={"Origin": "http://localhost:3000"},
+        headers={"Origin": settings.FRONTEND_URL.rstrip("/")},
         cookies={"sherlskyycommand_refresh": refresh_token},
     )
 

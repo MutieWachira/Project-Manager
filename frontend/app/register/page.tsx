@@ -208,7 +208,7 @@ export default function RegisterPage() {
 
                 <p className="mt-4 leading-7 text-slate-400">
                   Your registration request has been received. If your
-                  registration can be completed, you'll receive an email
+                  registration can be completed, you&apos;ll receive an email
                   with instructions to verify your email address.
                 </p>
 

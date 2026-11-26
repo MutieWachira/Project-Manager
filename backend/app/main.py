@@ -6,7 +6,7 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.api.routes import auth, health, projects
+from app.api.routes import auth, health, projects, project_environments, project_integrations, github_app
 from app.core.config import settings
 from app.services.database_status import DatabaseStatusMonitor
 
@@ -20,7 +20,6 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
         yield
     finally:
         await monitor.stop()
-
 
 app = FastAPI(
     title=settings.APP_NAME,
@@ -70,6 +69,21 @@ app.include_router(
     prefix=settings.API_V1_PREFIX,
 )
 
+app.include_router(
+    project_environments.router,
+    prefix=settings.API_V1_PREFIX,
+)
+
+
+app.include_router(
+    project_integrations.router,
+    prefix=settings.API_V1_PREFIX,
+)
+
+app.include_router(
+    github_app.router,
+    prefix=settings.API_V1_PREFIX,
+)
 
 @app.get("/", tags=["Root"])
 async def root() -> dict[str, str]:

@@ -587,9 +587,10 @@ function DashboardContent() {
                 filteredProjects.length > 0 && (
                   <div className="grid gap-4 md:grid-cols-2">
                     {filteredProjects.map((project) => (
-                      <article
+                      <Link
+                        href={`/dashboard/projects/${project.id}`}
                         key={project.id}
-                        className="group rounded-2xl border border-slate-800 bg-[#0c1627]/70 p-5 transition duration-200 hover:-translate-y-0.5 hover:border-blue-500/40 hover:bg-[#0c1627] hover:shadow-lg hover:shadow-slate-950/20"
+                        className="group block rounded-2xl border border-slate-800 bg-[#0c1627]/70 p-5 transition duration-200 hover:-translate-y-0.5 hover:border-blue-500/40 hover:bg-[#0c1627] hover:shadow-lg hover:shadow-slate-950/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
                       >
                         <div className="flex items-start justify-between gap-3">
                           <div className="flex min-w-0 items-center gap-3">
@@ -629,7 +630,7 @@ function DashboardContent() {
                             <ArrowUpRight size={14} />
                           </span>
                         </div>
-                      </article>
+                      </Link>
                     ))}
                   </div>
                 )}
